@@ -1,0 +1,114 @@
+================================================================================
+CHANGELOG - HC Tracker
+================================================================================
+
+[2026-01-15 21:04:21] - Markdown Editor, Issue Details & Label Sync
+--------------------------------------------------------------------------------
+- Added GitHub Flavored Markdown (GFM) editor with live preview
+  - Installed @uiw/react-md-editor with full GFM support
+  - Created reusable MarkdownEditor component
+  - Created MarkdownPreview component for rendering
+- Issue Detail Modal with full functionality
+  - View/edit issue title, description, priority, tags
+  - Comments section with Markdown support
+  - Status toggle button (Open/Closed) with instant update
+  - Admin-only GitHub link
+- Integrated Markdown editor into:
+  - CreateIssueModal (description field)
+  - IssueDetailModal (description editing & comments)
+- Label/Tag sync with GitHub (bidirectional)
+  - Import labels from GitHub as tags
+  - Export local tags to GitHub as labels
+  - Sync button on Tags settings page (Admin only)
+- Admin-only visibility improvements:
+  - Connections section hidden for non-admins
+  - Data Sync section hidden for non-admins
+  - GitHub links hidden for non-admins
+
+Files created/modified:
+- src/components/ui/MarkdownEditor.tsx (new)
+- src/components/ui/MarkdownPreview.tsx (new)
+- src/components/issues/IssueDetailModal.tsx (new)
+- src/components/issues/CreateIssueModal.tsx (updated)
+- src/app/api/issues/[id]/comments/route.ts (new)
+- src/app/api/tags/sync/route.ts (new)
+- src/app/(dashboard)/settings/tags/page.tsx (updated)
+- src/app/(dashboard)/settings/page.tsx (updated)
+- src/app/(dashboard)/board/page.tsx (updated)
+- src/app/(dashboard)/issues/page.tsx (updated)
+
+[2026-01-15 20:43:04] - GitHub Organization & Repository Selection
+--------------------------------------------------------------------------------
+- Added organization support for GitHub repository configuration
+- Created GitHub settings page for admins to select repository
+  - Lists personal repositories
+  - Lists all organizations the user belongs to
+  - Allows switching between personal and org repos
+  - Shows current active repository selection
+  - One-click repository selection with visual feedback
+- Extended GitHub API integration:
+  - listUserRepos() - fetch authenticated user's repositories
+  - listOrgRepos(org) - fetch organization repositories
+  - listOrgs() - list organizations user belongs to
+  - saveRepoConfig() - persist selected repo to database
+  - getRepoConfig() - retrieve config from DB with env fallback
+- Added Setting model usage for storing github_repo configuration
+- Added GitHub nav link to Sidebar (admin-only)
+
+Files created/modified:
+- src/lib/github.ts (extended with org methods)
+- src/app/api/github/repos/route.ts (new - GET/POST for repo selection)
+- src/app/(dashboard)/settings/github/page.tsx (new - repository selector UI)
+- src/components/layout/Sidebar.tsx (added GitHub nav link)
+
+[2026-01-15 20:27:06] - Initial Project Setup Complete
+--------------------------------------------------------------------------------
+- Created Next.js 16 project with TypeScript and Tailwind CSS
+- Configured Docker Compose with MySQL (port 4030) and App (port 4029)
+- Implemented Prisma ORM with MySQL database schema:
+  - User model with role-based access (ADMIN, MANAGER, MEMBER, VIEWER)
+  - Custom Tag system with categories and colors
+  - Group system for team organization
+  - Issue model linked to GitHub Issues
+  - Activity logging for audit trail
+  - Board columns for Kanban workflow
+- Implemented independent authentication system:
+  - NextAuth.js with credentials provider
+  - JWT-based sessions (7 days)
+  - Registration and login pages
+  - Password hashing with bcrypt
+- Created GitHub API integration layer:
+  - Central token configuration (server-side)
+  - Issue CRUD operations synced with GitHub
+  - Comment management
+  - Label management
+- Built Dashboard UI (Jira-style):
+  - Kanban board with drag-and-drop (5 columns: Backlog, To Do, In Progress, Review, Done)
+  - Issue list view with filters
+  - Issue cards showing priority, tags, assignees
+  - Create issue modal
+- Implemented Tags and Groups management:
+  - Tags settings page with color picker
+  - Groups settings page
+  - API endpoints for CRUD operations
+- Added health check endpoints for GitHub and Database connections
+- Created seed script for default data (admin user, tags, groups, board columns)
+
+Files created:
+- docker-compose.yml, Dockerfile
+- prisma/schema.prisma, prisma/seed.ts
+- src/lib/prisma.ts, src/lib/github.ts, src/lib/auth.ts
+- src/stores/issueStore.ts
+- src/components/layout/Sidebar.tsx, Header.tsx
+- src/components/board/KanbanBoard.tsx, IssueCard.tsx
+- src/components/issues/CreateIssueModal.tsx
+- src/app/(auth)/login/page.tsx, register/page.tsx
+- src/app/(dashboard)/board/page.tsx, issues/page.tsx, settings/page.tsx
+- src/app/(dashboard)/settings/tags/page.tsx, groups/page.tsx
+- src/app/api/auth/[...nextauth]/route.ts, register/route.ts
+- src/app/api/issues/route.ts, [id]/route.ts
+- src/app/api/tags/route.ts, [id]/route.ts
+- src/app/api/groups/route.ts, [id]/route.ts
+- src/app/api/health/github/route.ts, db/route.ts
+
+================================================================================

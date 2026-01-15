@@ -1,0 +1,148 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '../auth/[...nextauth]/route'
+import { prisma } from '@/lib/prisma'
+import { github } from '@/lib/github'
+import { Priority } from '@prisma/client'
+
+// GET - Fetch all issues (synced with GitHub)
+export async function GET(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(req.url)
+    const sync = searchParams.get('sync') === 'true'
+
+    // Optionally sync with GitHub first
+    if (sync) {
+      await syncIssuesFromGitHub()
+    }
+
+    // Fetch issues with relations
+    const issues = await prisma.issue.findMany({
+      include: {
+        tags: {
+          include: { tag: true },
+        },
+        groups: {
+          include: { group: true },
+        },
+        assignments: {
+          include: {
+            user: {
+              select: { id: true, username: true, name: true, avatar: true },
+            },
+          },
+        },
+      },
+      orderBy: [{ boardColumn: 'asc' }, { boardPosition: 'asc' }],
+    })
+
+    return NextResponse.json({ success: true, data: issues })
+  } catch (error) {
+    console.error('Error fetching issues:', error)
+    return NextResponse.json({ error: 'Failed to fetch issues' }, { status: 500 })
+  }
+}
+
+// POST - Create a new issue (creates on GitHub and local DB)
+export async function POST(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await req.json()
+    const { title, body: issueBody, priority, tagIds, groupIds, assigneeIds } = body
+
+    if (!title) {
+      return NextResponse.json({ error: 'Title is required' }, { status: 400 })
+    }
+
+    // Create issue on GitHub
+    const githubIssue = await github.createIssue({
+      title,
+      body: issueBody,
+    })
+
+    // Create local issue record
+    const issue = await prisma.issue.create({
+      data: {
+        githubId: githubIssue.number,
+        githubNodeId: githubIssue.node_id,
+        title: githubIssue.title,
+        body: githubIssue.body,
+        state: 'OPEN',
+        githubUrl: githubIssue.html_url,
+        priority: (priority as Priority) || 'MEDIUM',
+        boardColumn: 'backlog',
+        boardPosition: 0,
+        tags: tagIds?.length
+          ? { create: tagIds.map((tagId: string) => ({ tagId })) }
+          : undefined,
+        groups: groupIds?.length
+          ? { create: groupIds.map((groupId: string) => ({ groupId })) }
+          : undefined,
+        assignments: assigneeIds?.length
+          ? { create: assigneeIds.map((userId: string) => ({ userId })) }
+          : undefined,
+      },
+      include: {
+        tags: { include: { tag: true } },
+        groups: { include: { group: true } },
+        assignments: {
+          include: {
+            user: { select: { id: true, username: true, name: true, avatar: true } },
+          },
+        },
+      },
+    })
+
+    // Log activity
+    await prisma.activity.create({
+      data: {
+        issueId: issue.id,
+        userId: session.user.id,
+        action: 'ISSUE_CREATED',
+        details: { title: issue.title },
+      },
+    })
+
+    return NextResponse.json({ success: true, data: issue })
+  } catch (error) {
+    console.error('Error creating issue:', error)
+    return NextResponse.json({ error: 'Failed to create issue' }, { status: 500 })
+  }
+}
+
+// Helper: Sync issues from GitHub
+async function syncIssuesFromGitHub() {
+  const githubIssues = await github.getIssues('all')
+
+  for (const ghIssue of githubIssues) {
+    await prisma.issue.upsert({
+      where: { githubId: ghIssue.number },
+      update: {
+        title: ghIssue.title,
+        body: ghIssue.body,
+        state: ghIssue.state === 'open' ? 'OPEN' : 'CLOSED',
+        githubUrl: ghIssue.html_url,
+        syncedAt: new Date(),
+      },
+      create: {
+        githubId: ghIssue.number,
+        githubNodeId: ghIssue.node_id,
+        title: ghIssue.title,
+        body: ghIssue.body,
+        state: ghIssue.state === 'open' ? 'OPEN' : 'CLOSED',
+        githubUrl: ghIssue.html_url,
+        priority: 'MEDIUM',
+        boardColumn: ghIssue.state === 'open' ? 'backlog' : 'done',
+      },
+    })
+  }
+}

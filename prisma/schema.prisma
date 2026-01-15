@@ -1,0 +1,258 @@
+// Prisma Schema for GitHub Bug Tracker
+// MySQL Database
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - independent login system
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  username      String    @unique
+  password      String    // hashed password
+  name          String?
+  avatar        String?
+  role          UserRole  @default(MEMBER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  groups        UserGroup[]
+  assignedIssues IssueAssignment[]
+  comments      Comment[]
+  activities    Activity[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  MEMBER
+  VIEWER
+}
+
+// Group model - for organizing users
+model Group {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?  @db.Text
+  color       String   @default("#6366f1")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users       UserGroup[]
+  issues      IssueGroup[]
+
+  @@map("groups")
+}
+
+// Many-to-many: User <-> Group
+model UserGroup {
+  id        String   @id @default(cuid())
+  userId    String
+  groupId   String
+  joinedAt  DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+  @@map("user_groups")
+}
+
+// Custom Tag model - extends GitHub labels
+model Tag {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  color       String   @default("#3b82f6")
+  icon        String?  // lucide icon name
+  category    String?  // for grouping tags (e.g., "priority", "type", "status")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  issues      IssueTag[]
+
+  @@map("tags")
+}
+
+// Issue metadata - links to GitHub Issue
+model Issue {
+  id              String        @id @default(cuid())
+  githubId        Int           @unique // GitHub issue number
+  githubNodeId    String?       // GitHub GraphQL node ID
+
+  // Cached data from GitHub (for faster queries)
+  title           String        @db.VarChar(500)
+  body            String?       @db.Text
+  state           IssueState    @default(OPEN)
+  githubUrl       String
+
+  // Custom fields (our system)
+  priority        Priority      @default(MEDIUM)
+  customStatus    String?       // Custom workflow status
+  dueDate         DateTime?
+  estimatedHours  Float?
+
+  // Kanban position
+  boardColumn     String        @default("backlog")
+  boardPosition   Int           @default(0)
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  syncedAt        DateTime      @default(now()) // Last sync with GitHub
+
+  // Relations
+  tags            IssueTag[]
+  groups          IssueGroup[]
+  assignments     IssueAssignment[]
+  comments        Comment[]
+  activities      Activity[]
+
+  @@index([state])
+  @@index([priority])
+  @@index([boardColumn, boardPosition])
+  @@map("issues")
+}
+
+enum IssueState {
+  OPEN
+  CLOSED
+}
+
+enum Priority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  NONE
+}
+
+// Many-to-many: Issue <-> Tag
+model IssueTag {
+  id        String   @id @default(cuid())
+  issueId   String
+  tagId     String
+  addedAt   DateTime @default(now())
+
+  issue     Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([issueId, tagId])
+  @@map("issue_tags")
+}
+
+// Many-to-many: Issue <-> Group
+model IssueGroup {
+  id        String   @id @default(cuid())
+  issueId   String
+  groupId   String
+  addedAt   DateTime @default(now())
+
+  issue     Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([issueId, groupId])
+  @@map("issue_groups")
+}
+
+// Issue Assignment (who is working on it)
+model IssueAssignment {
+  id        String   @id @default(cuid())
+  issueId   String
+  userId    String
+  role      String   @default("assignee") // assignee, reviewer, etc.
+  assignedAt DateTime @default(now())
+
+  issue     Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([issueId, userId])
+  @@map("issue_assignments")
+}
+
+// Local comments (synced with GitHub)
+model Comment {
+  id            String   @id @default(cuid())
+  issueId       String
+  userId        String
+  githubId      Int?     // GitHub comment ID if synced
+  content       String   @db.Text
+  isInternal    Boolean  @default(false) // Internal comments not synced to GitHub
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  issue         Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+// Activity log
+model Activity {
+  id          String       @id @default(cuid())
+  issueId     String?
+  userId      String
+  action      ActivityType
+  details     Json?        // Additional data about the action
+  createdAt   DateTime     @default(now())
+
+  issue       Issue?       @relation(fields: [issueId], references: [id], onDelete: SetNull)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([issueId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("activities")
+}
+
+enum ActivityType {
+  ISSUE_CREATED
+  ISSUE_UPDATED
+  ISSUE_CLOSED
+  ISSUE_REOPENED
+  ISSUE_ASSIGNED
+  ISSUE_UNASSIGNED
+  COMMENT_ADDED
+  TAG_ADDED
+  TAG_REMOVED
+  GROUP_ADDED
+  GROUP_REMOVED
+  STATUS_CHANGED
+  PRIORITY_CHANGED
+}
+
+// Board Column Configuration
+model BoardColumn {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  color       String   @default("#64748b")
+  position    Int      @default(0)
+  isDefault   Boolean  @default(false)
+  mappedState IssueState? // Maps to GitHub state (OPEN/CLOSED)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("board_columns")
+}
+
+// App Settings
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
