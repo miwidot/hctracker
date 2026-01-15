@@ -2,6 +2,18 @@
 CHANGELOG - HC Tracker
 ================================================================================
 
+[2026-01-15 22:00:03] - User Profile Settings
+--------------------------------------------------------------------------------
+- Added ability for users to change their email and password
+  - New API endpoint: /api/users/me (GET and PATCH)
+  - Profile form in Settings page with name, email, password fields
+  - Password change requires current password verification
+  - Validates email uniqueness and password length (min 6 chars)
+
+Files created/modified:
+- src/app/api/users/me/route.ts (new)
+- src/app/(dashboard)/settings/page.tsx (modified)
+
 [2026-01-15 21:04:21] - Markdown Editor, Issue Details & Label Sync
 --------------------------------------------------------------------------------
 - Added GitHub Flavored Markdown (GFM) editor with live preview
