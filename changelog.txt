@@ -2,6 +2,15 @@
 CHANGELOG - HC Tracker
 ================================================================================
 
+[2026-01-15 22:57:08] - Issue creation redirect & sorting fix
+--------------------------------------------------------------------------------
+- After creating issue, now redirects to the new issue page (not list)
+- Issues sorted by GitHub ID descending (newest/highest ID first)
+
+Files modified:
+- src/app/(dashboard)/issues/new/page.tsx (redirect to /issues/{id})
+- src/app/api/issues/route.ts (orderBy githubId desc)
+
 [2026-01-15 22:50:16] - Fix tag sync to delete GitHub labels when deleted locally
 --------------------------------------------------------------------------------
 - Tag sync now properly handles local deletions
