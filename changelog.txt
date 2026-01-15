@@ -2,6 +2,18 @@
 CHANGELOG - HC Tracker
 ================================================================================
 
+[2026-01-15 23:26:58] - Hide GitHub URLs with short proxy URLs for images
+--------------------------------------------------------------------------------
+- Upload API now returns short /img/filename URL instead of full GitHub URL
+- New proxy endpoint /img/[filename] redirects to GitHub raw URL
+- Users see clean URLs, actual GitHub storage hidden
+
+Files created:
+- src/app/img/[filename]/route.ts (proxy redirect endpoint)
+
+Files modified:
+- src/app/api/upload/route.ts (return short URL)
+
 [2026-01-15 23:16:14] - Image upload for issues and comments
 --------------------------------------------------------------------------------
 - Added image upload functionality
