@@ -47,7 +47,6 @@ export default function LoginPage() {
             <Bug className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white">HC Tracker</h1>
-          <p className="text-slate-400 mt-2">Sign in to your account</p>
         </div>
 
         {/* Form */}
@@ -102,16 +101,9 @@ export default function LoginPage() {
             {loading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
-              'Sign In'
+              'Login'
             )}
           </button>
-
-          <p className="text-center text-slate-400 mt-6">
-            Don&apos;t have an account?{' '}
-            <Link href="/register" className="text-indigo-400 hover:text-indigo-300">
-              Sign up
-            </Link>
-          </p>
         </form>
       </div>
     </div>
