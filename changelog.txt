@@ -2,6 +2,15 @@
 CHANGELOG - HC Tracker
 ================================================================================
 
+[2026-01-15 22:39:32] - Fix repo sync to clean up old issues
+--------------------------------------------------------------------------------
+- Sync now removes issues from previous/other repos
+  - Deletes local issues that don't exist in current GitHub repo
+  - Prevents stale data when switching repositories
+
+Files modified:
+- src/app/api/issues/route.ts (delete old issues before sync)
+
 [2026-01-15 22:34:12] - Markdown Editor & Password Change Fix
 --------------------------------------------------------------------------------
 - Disabled live preview in Markdown editor (now edit-only mode)

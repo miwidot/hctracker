@@ -144,6 +144,18 @@ export async function POST(req: NextRequest) {
 async function syncIssuesFromGitHub() {
   const githubIssues = await github.getIssues('all')
 
+  // Get all GitHub issue numbers from current repo
+  const githubIssueNumbers = githubIssues.map((i) => i.number)
+
+  // Delete local issues that don't exist in current GitHub repo
+  await prisma.issue.deleteMany({
+    where: {
+      githubId: {
+        notIn: githubIssueNumbers.length > 0 ? githubIssueNumbers : [-1],
+      },
+    },
+  })
+
   for (const ghIssue of githubIssues) {
     // Upsert the issue
     const issue = await prisma.issue.upsert({
