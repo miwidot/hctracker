@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRepoConfig } from '@/lib/github'
 
+// Helper to fetch with retry
+async function fetchWithRetry(url: string, options: RequestInit, retries = 3, delay = 500): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    const response = await fetch(url, options)
+    if (response.ok) return response
+    if (i < retries - 1) {
+      await new Promise(resolve => setTimeout(resolve, delay))
+    }
+  }
+  return fetch(url, options) // Final attempt
+}
+
 // GET - Proxy image from GitHub (works for private repos)
 export async function GET(
   req: NextRequest,
@@ -10,10 +22,10 @@ export async function GET(
   const { owner, repo } = await getRepoConfig()
   const token = process.env.GITHUB_TOKEN
 
-  // Fetch from GitHub API with authentication
+  // Fetch from GitHub API with authentication (with retry for newly uploaded files)
   const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/.github/images/${filename}`
 
-  const response = await fetch(apiUrl, {
+  const response = await fetchWithRetry(apiUrl, {
     headers: {
       'Authorization': `Bearer ${token}`,
       'Accept': 'application/vnd.github.raw',
