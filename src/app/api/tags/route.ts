@@ -55,6 +55,11 @@ export async function POST(req: NextRequest) {
         icon,
         category,
       },
+      include: {
+        _count: {
+          select: { issues: true },
+        },
+      },
     })
 
     return NextResponse.json({ success: true, data: tag })

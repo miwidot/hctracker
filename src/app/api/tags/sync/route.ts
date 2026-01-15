@@ -25,7 +25,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Get GitHub labels
-    const githubLabels = await github.getLabels()
+    let githubLabels
+    try {
+      githubLabels = await github.getLabels()
+    } catch (err) {
+      console.error('Failed to get GitHub labels:', err)
+      return NextResponse.json(
+        { error: 'Failed to connect to GitHub. Check your repository configuration.' },
+        { status: 500 }
+      )
+    }
 
     // Get local tags
     const localTags = await prisma.tag.findMany()
