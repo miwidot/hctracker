@@ -45,11 +45,8 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(bytes)
     const base64Content = buffer.toString('base64')
 
-    // Upload to GitHub repository
-    await github.uploadImage(filename, base64Content)
-
-    // Return short URL for editor (will be expanded when saving)
-    const url = `/img/${filename}`
+    // Upload to GitHub repository and get full URL
+    const url = await github.uploadImage(filename, base64Content)
 
     return NextResponse.json({
       success: true,
