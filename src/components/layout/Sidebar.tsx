@@ -19,7 +19,7 @@ import clsx from 'clsx'
 import { useState, useEffect } from 'react'
 
 const navigation = [
-  { name: 'Board', href: '/board', icon: LayoutDashboard },
+  { name: 'Board', href: '/board', icon: LayoutDashboard, adminOnly: true },
   { name: 'Issues', href: '/issues', icon: ListTodo },
   { name: 'Tags', href: '/settings/tags', icon: Tag, adminOnly: true },
   { name: 'Groups', href: '/settings/groups', icon: Users, adminOnly: true },

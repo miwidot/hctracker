@@ -28,7 +28,7 @@ export default function LoginPage() {
       if (result?.error) {
         setError('Invalid email or password')
       } else {
-        router.push('/board')
+        router.push('/issues')
         router.refresh()
       }
     } catch {

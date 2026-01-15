@@ -2,6 +2,18 @@
 CHANGELOG - HC Tracker
 ================================================================================
 
+[2026-01-15 23:00:23] - Make Board admin-only
+--------------------------------------------------------------------------------
+- Board page now requires admin access
+  - Hidden from sidebar for non-admin users
+  - Redirects to /issues if non-admin tries to access directly
+- Login now redirects all users to /issues instead of /board
+
+Files modified:
+- src/components/layout/Sidebar.tsx (Board: adminOnly: true)
+- src/app/(dashboard)/board/page.tsx (admin check + redirect)
+- src/app/(auth)/login/page.tsx (redirect to /issues)
+
 [2026-01-15 22:57:08] - Issue creation redirect & sorting fix
 --------------------------------------------------------------------------------
 - After creating issue, now redirects to the new issue page (not list)
