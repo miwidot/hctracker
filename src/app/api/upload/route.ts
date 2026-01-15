@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../auth/[...nextauth]/route'
-import { writeFile } from 'fs/promises'
-import path from 'path'
+import { github } from '@/lib/github'
 import { randomUUID } from 'crypto'
 
 export async function POST(req: NextRequest) {
@@ -37,18 +36,17 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Generate unique filename
-    const ext = path.extname(file.name) || '.jpg'
-    const filename = `${randomUUID()}${ext}`
-    const uploadPath = path.join(process.cwd(), 'public', 'uploads', filename)
+    // Get file extension
+    const ext = file.name.split('.').pop() || 'jpg'
+    const filename = `${randomUUID()}.${ext}`
 
-    // Convert file to buffer and save
+    // Convert file to base64
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-    await writeFile(uploadPath, buffer)
+    const base64Content = buffer.toString('base64')
 
-    // Return the URL
-    const url = `/uploads/${filename}`
+    // Upload to GitHub repository - returns raw URL
+    const url = await github.uploadImage(filename, base64Content)
 
     return NextResponse.json({
       success: true,

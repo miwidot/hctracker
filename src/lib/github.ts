@@ -299,4 +299,26 @@ export const github = {
       create: { key: 'github_repo', value: { owner, repo } },
     })
   },
+
+  // Upload image to repository
+  async uploadImage(filename: string, content: string): Promise<string> {
+    const { owner, repo } = await getRepoConfig()
+    const path = `.github/images/${filename}`
+
+    try {
+      const response = await octokit.repos.createOrUpdateFileContents({
+        owner,
+        repo,
+        path,
+        message: `Upload image: ${filename}`,
+        content, // base64 encoded
+      })
+
+      // Return raw GitHub URL for the image
+      return `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}`
+    } catch (error) {
+      console.error('Error uploading image to GitHub:', error)
+      throw error
+    }
+  },
 }
