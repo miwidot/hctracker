@@ -46,11 +46,14 @@ export default function NewIssuePage() {
     })
   }, [])
 
+  const [error, setError] = useState('')
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.title.trim()) return
 
     setLoading(true)
+    setError('')
     try {
       const response = await fetch('/api/issues', {
         method: 'POST',
@@ -59,12 +62,15 @@ export default function NewIssuePage() {
       })
 
       const data = await response.json()
-      if (data.success) {
+      if (data.success && data.data?.id) {
         addIssue(data.data)
         router.push(`/issues/${data.data.id}`)
+      } else {
+        setError(data.error || 'Failed to create issue')
       }
-    } catch (error) {
-      console.error('Error creating issue:', error)
+    } catch (err) {
+      console.error('Error creating issue:', err)
+      setError('An error occurred while creating the issue')
     } finally {
       setLoading(false)
     }
@@ -111,6 +117,13 @@ export default function NewIssuePage() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-6">
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400">
+                  {error}
+                </div>
+              )}
+
               {/* Title */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
