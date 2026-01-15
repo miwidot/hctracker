@@ -144,7 +144,7 @@ export function IssueDetailModal({ issue, isOpen, onClose }: IssueDetailModalPro
       const data = await response.json()
       if (data.success) {
         setCurrentState(newState)
-        updateIssue(data.data)
+        updateIssue(issue.id, data.data)
       }
     } catch (error) {
       console.error('Error updating issue state:', error)
@@ -170,7 +170,7 @@ export function IssueDetailModal({ issue, isOpen, onClose }: IssueDetailModalPro
       })
       const data = await response.json()
       if (data.success) {
-        updateIssue(data.data)
+        updateIssue(issue.id, data.data)
         setIsEditing(false)
       }
     } catch (error) {
