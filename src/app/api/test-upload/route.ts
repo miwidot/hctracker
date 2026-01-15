@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
-import { github, getRepoConfig } from '@/lib/github'
+import { Octokit } from '@octokit/rest'
+import { getRepoConfig } from '@/lib/github'
 
-// GET - Test GitHub upload functionality
+// GET - Test GitHub upload functionality with direct API call
 export async function GET() {
   const results: string[] = []
 
@@ -11,31 +12,58 @@ export async function GET() {
     results.push(`1. Repo config: owner=${owner}, repo=${repo}`)
 
     if (!owner || !repo) {
-      return NextResponse.json({
-        success: false,
-        error: 'Owner/repo not configured',
-        results
-      })
+      return NextResponse.json({ success: false, error: 'Owner/repo not configured', results })
     }
 
-    // Step 2: Test GitHub connection
+    // Step 2: Check token
+    const token = process.env.GITHUB_TOKEN
+    results.push(`2. Token exists: ${!!token}, length: ${token?.length || 0}`)
+
+    if (!token) {
+      return NextResponse.json({ success: false, error: 'No GitHub token', results })
+    }
+
+    // Step 3: Create Octokit and test auth
+    const octokit = new Octokit({ auth: token })
+
     try {
-      const repoInfo = await github.getRepoInfo()
-      results.push(`2. GitHub connection OK: ${repoInfo.full_name}, branch: ${repoInfo.default_branch}`)
+      const user = await octokit.users.getAuthenticated()
+      results.push(`3. Authenticated as: ${user.data.login}`)
     } catch (e) {
-      results.push(`2. GitHub connection FAILED: ${e}`)
-      return NextResponse.json({ success: false, error: 'GitHub connection failed', results })
+      results.push(`3. Auth FAILED: ${e}`)
+      return NextResponse.json({ success: false, error: 'Auth failed', results })
     }
 
-    // Step 3: Test file upload with a small test file
+    // Step 4: Check repo access
+    try {
+      const repoData = await octokit.repos.get({ owner, repo })
+      results.push(`4. Repo access OK: ${repoData.data.full_name}, permissions: ${JSON.stringify(repoData.data.permissions)}`)
+    } catch (e) {
+      results.push(`4. Repo access FAILED: ${e}`)
+      return NextResponse.json({ success: false, error: 'Repo access failed', results })
+    }
+
+    // Step 5: Direct upload test
     const testFilename = `test-${Date.now()}.txt`
-    const testContent = Buffer.from('Test upload ' + new Date().toISOString()).toString('base64')
+    const testContent = Buffer.from('Test ' + new Date().toISOString()).toString('base64')
+    const path = `.github/images/${testFilename}`
 
     try {
-      const url = await github.uploadImage(testFilename, testContent)
-      results.push(`3. Upload OK: ${url}`)
-    } catch (e) {
-      results.push(`3. Upload FAILED: ${e}`)
+      const response = await octokit.repos.createOrUpdateFileContents({
+        owner,
+        repo,
+        path,
+        message: `Test upload: ${testFilename}`,
+        content: testContent,
+        branch: 'main',
+      })
+      results.push(`5. Upload response status: ${response.status}`)
+      results.push(`   SHA: ${response.data.content?.sha}`)
+      results.push(`   URL: ${response.data.content?.download_url}`)
+    } catch (e: unknown) {
+      const err = e as Error & { status?: number; message?: string }
+      results.push(`5. Upload FAILED: ${err.message}`)
+      results.push(`   Status: ${err.status}`)
       return NextResponse.json({ success: false, error: 'Upload failed', results })
     }
 

@@ -313,8 +313,6 @@ export const github = {
     const repoInfo = await octokit.repos.get({ owner, repo })
     const branch = repoInfo.data.default_branch
 
-    console.log(`Uploading image to ${owner}/${repo}/${branch}/${path}`)
-
     const response = await octokit.repos.createOrUpdateFileContents({
       owner,
       repo,
@@ -324,10 +322,13 @@ export const github = {
       branch,
     })
 
-    console.log('Upload response:', response.status, response.data.content?.html_url)
+    // Return the download URL from GitHub's response
+    const downloadUrl = response.data.content?.download_url
+    if (!downloadUrl) {
+      throw new Error('Upload failed - no download URL in response')
+    }
 
-    // Return raw GitHub URL for the image
-    return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`
+    return downloadUrl
   },
 }
 
