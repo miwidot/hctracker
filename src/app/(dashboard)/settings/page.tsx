@@ -81,10 +81,10 @@ export default function SettingsPage() {
 
       const data = await response.json()
 
-      if (!response.ok) {
+      if (!response.ok || !data.success) {
         setProfileMessage({ type: 'error', text: data.error || 'Failed to update profile' })
       } else {
-        setProfileMessage({ type: 'success', text: 'Profile updated successfully' })
+        setProfileMessage({ type: 'success', text: data.message || 'Profile updated successfully' })
         setCurrentPassword('')
         setNewPassword('')
         setConfirmPassword('')

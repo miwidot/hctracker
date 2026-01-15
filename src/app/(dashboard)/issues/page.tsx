@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { Header } from '@/components/layout/Header'
 import { CreateIssueModal } from '@/components/issues/CreateIssueModal'
@@ -13,9 +13,17 @@ import {
   Minus,
   ExternalLink,
   Filter,
+  X,
+  Tag,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import clsx from 'clsx'
+
+interface TagData {
+  id: string
+  name: string
+  color: string
+}
 
 const priorityConfig = {
   CRITICAL: { icon: AlertCircle, color: 'text-red-500', label: 'Critical' },
@@ -34,10 +42,33 @@ export default function IssuesPage() {
   const { data: session } = useSession()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null)
+  const [availableTags, setAvailableTags] = useState<TagData[]>([])
+  const [showTagDropdown, setShowTagDropdown] = useState(false)
+  const tagDropdownRef = useRef<HTMLDivElement>(null)
   const allIssues = useIssueStore((state) => state.issues)
   const filters = useIssueStore((state) => state.filters)
   const fetchIssues = useIssueStore((state) => state.fetchIssues)
   const setFilters = useIssueStore((state) => state.setFilters)
+
+  // Fetch available tags
+  useEffect(() => {
+    fetch('/api/tags')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success) setAvailableTags(data.data)
+      })
+  }, [])
+
+  // Close tag dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (tagDropdownRef.current && !tagDropdownRef.current.contains(e.target as Node)) {
+        setShowTagDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   // Memoize filtered issues
   const issues = useMemo(() => {
@@ -47,6 +78,11 @@ export default function IssuesPage() {
       }
       if (filters.priority && filters.priority !== 'all') {
         if (issue.priority !== filters.priority) return false
+      }
+      // Tag filter
+      if (filters.tagIds && filters.tagIds.length > 0) {
+        const issueTagIds = issue.tags.map((t) => t.tag.id)
+        if (!filters.tagIds.some((id) => issueTagIds.includes(id))) return false
       }
       if (filters.search) {
         const search = filters.search.toLowerCase()
@@ -60,6 +96,19 @@ export default function IssuesPage() {
       return true
     })
   }, [allIssues, filters])
+
+  const toggleTagFilter = (tagId: string) => {
+    const currentTags = filters.tagIds || []
+    if (currentTags.includes(tagId)) {
+      setFilters({ tagIds: currentTags.filter((id) => id !== tagId) })
+    } else {
+      setFilters({ tagIds: [...currentTags, tagId] })
+    }
+  }
+
+  const clearTagFilters = () => {
+    setFilters({ tagIds: [] })
+  }
 
   const selectedIssue = selectedIssueId
     ? allIssues.find((i) => i.id === selectedIssueId) || null
@@ -105,6 +154,97 @@ export default function IssuesPage() {
             <option value="MEDIUM">Medium</option>
             <option value="LOW">Low</option>
           </select>
+
+          {/* Tag Filter */}
+          <div className="relative" ref={tagDropdownRef}>
+            <button
+              onClick={() => setShowTagDropdown(!showTagDropdown)}
+              className={clsx(
+                'flex items-center gap-2 bg-slate-700 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500',
+                filters.tagIds && filters.tagIds.length > 0 && 'ring-2 ring-indigo-500'
+              )}
+            >
+              <Tag className="w-4 h-4" />
+              Tags
+              {filters.tagIds && filters.tagIds.length > 0 && (
+                <span className="bg-indigo-500 text-white text-xs px-1.5 rounded-full">
+                  {filters.tagIds.length}
+                </span>
+              )}
+            </button>
+
+            {showTagDropdown && (
+              <div className="absolute top-full left-0 mt-2 w-64 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700">
+                  <span className="text-sm font-medium text-white">Filter by Tag</span>
+                  {filters.tagIds && filters.tagIds.length > 0 && (
+                    <button
+                      onClick={clearTagFilters}
+                      className="text-xs text-slate-400 hover:text-white"
+                    >
+                      Clear all
+                    </button>
+                  )}
+                </div>
+                <div className="max-h-64 overflow-y-auto p-2">
+                  {availableTags.length === 0 ? (
+                    <p className="text-sm text-slate-400 px-2 py-3 text-center">No tags available</p>
+                  ) : (
+                    availableTags.map((tag) => {
+                      const isSelected = filters.tagIds?.includes(tag.id)
+                      return (
+                        <button
+                          key={tag.id}
+                          onClick={() => toggleTagFilter(tag.id)}
+                          className={clsx(
+                            'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors',
+                            isSelected ? 'bg-slate-700' : 'hover:bg-slate-700/50'
+                          )}
+                        >
+                          <span
+                            className="w-3 h-3 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: tag.color }}
+                          />
+                          <span className="text-white flex-1 text-left">{tag.name}</span>
+                          {isSelected && (
+                            <X className="w-4 h-4 text-slate-400" />
+                          )}
+                        </button>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Active tag filters */}
+          {filters.tagIds && filters.tagIds.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {filters.tagIds.map((tagId) => {
+                const tag = availableTags.find((t) => t.id === tagId)
+                if (!tag) return null
+                return (
+                  <span
+                    key={tagId}
+                    className="flex items-center gap-1 px-2 py-1 rounded-full text-xs"
+                    style={{
+                      backgroundColor: `${tag.color}20`,
+                      color: tag.color,
+                    }}
+                  >
+                    {tag.name}
+                    <button
+                      onClick={() => toggleTagFilter(tagId)}
+                      className="hover:opacity-70"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {/* Issue List */}

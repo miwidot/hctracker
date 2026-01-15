@@ -24,7 +24,7 @@ export const useIssueStore = create<IssueStore>((set, get) => ({
   loading: false,
   error: null,
   filters: {
-    state: 'all',
+    state: 'OPEN',
     priority: 'all',
     tagIds: [],
     groupIds: [],

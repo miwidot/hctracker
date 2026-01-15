@@ -20,7 +20,7 @@ export function MarkdownEditor({
   onChange,
   placeholder = 'Write your content here...',
   minHeight = 200,
-  preview = 'live',
+  preview = 'edit',
 }: MarkdownEditorProps) {
   return (
     <div data-color-mode="dark">

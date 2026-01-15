@@ -92,7 +92,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   if (Object.keys(updateData).length === 0) {
-    return NextResponse.json({ message: 'No changes to update' })
+    return NextResponse.json({ success: true, message: 'No changes to update' })
   }
 
   const updatedUser = await prisma.user.update({
@@ -107,5 +107,11 @@ export async function PATCH(request: NextRequest) {
     },
   })
 
-  return NextResponse.json(updatedUser)
+  const passwordChanged = 'password' in updateData
+
+  return NextResponse.json({
+    success: true,
+    user: updatedUser,
+    message: passwordChanged ? 'Password updated successfully' : 'Profile updated successfully'
+  })
 }

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '../../auth/[...nextauth]/route'
 import { prisma } from '@/lib/prisma'
 import { github } from '@/lib/github'
+import { notifyAllUsers, notifyIssueAssignees } from '@/lib/notifications'
 
 // GET - Fetch single issue
 export async function GET(
@@ -154,6 +155,28 @@ export async function PATCH(
         details: body,
       },
     })
+
+    // Send notifications for board column changes (moved issues)
+    if (boardColumn && boardColumn !== currentIssue.boardColumn) {
+      await notifyAllUsers(
+        'ISSUE_MOVED',
+        `Issue moved: ${issue.title}`,
+        `Moved from ${currentIssue.boardColumn} to ${boardColumn}`,
+        id,
+        session.user.id
+      )
+    }
+
+    // Notify assignees when issue is assigned
+    if (assigneeIds && assigneeIds.length > 0) {
+      await notifyIssueAssignees(
+        id,
+        'ISSUE_ASSIGNED',
+        `You were assigned to: ${issue.title}`,
+        `Issue #${issue.githubId}`,
+        session.user.id
+      )
+    }
 
     // Fetch updated issue with relations
     const updatedIssue = await prisma.issue.findUnique({

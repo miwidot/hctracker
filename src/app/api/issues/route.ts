@@ -4,6 +4,7 @@ import { authOptions } from '../auth/[...nextauth]/route'
 import { prisma } from '@/lib/prisma'
 import { github } from '@/lib/github'
 import { Priority } from '@prisma/client'
+import { notifyAllUsers } from '@/lib/notifications'
 
 // GET - Fetch all issues (synced with GitHub)
 export async function GET(req: NextRequest) {
@@ -123,6 +124,15 @@ export async function POST(req: NextRequest) {
       },
     })
 
+    // Notify all users about new issue
+    await notifyAllUsers(
+      'ISSUE_CREATED',
+      `New issue: ${issue.title}`,
+      `Issue #${issue.githubId} was created`,
+      issue.id,
+      session.user.id // exclude creator
+    )
+
     return NextResponse.json({ success: true, data: issue })
   } catch (error) {
     console.error('Error creating issue:', error)
@@ -135,7 +145,8 @@ async function syncIssuesFromGitHub() {
   const githubIssues = await github.getIssues('all')
 
   for (const ghIssue of githubIssues) {
-    await prisma.issue.upsert({
+    // Upsert the issue
+    const issue = await prisma.issue.upsert({
       where: { githubId: ghIssue.number },
       update: {
         title: ghIssue.title,
@@ -155,5 +166,37 @@ async function syncIssuesFromGitHub() {
         boardColumn: ghIssue.state === 'open' ? 'backlog' : 'done',
       },
     })
+
+    // Sync labels as tags
+    if (ghIssue.labels && ghIssue.labels.length > 0) {
+      // Get or create tags for each label
+      const tagIds: string[] = []
+      for (const label of ghIssue.labels) {
+        // Find existing tag or create new one
+        let tag = await prisma.tag.findUnique({
+          where: { name: label.name },
+        })
+        if (!tag) {
+          tag = await prisma.tag.create({
+            data: {
+              name: label.name,
+              color: `#${label.color}`,
+              description: label.description || undefined,
+              category: 'github',
+            },
+          })
+        }
+        tagIds.push(tag.id)
+      }
+
+      // Remove existing tag links and create new ones
+      await prisma.issueTag.deleteMany({ where: { issueId: issue.id } })
+      if (tagIds.length > 0) {
+        await prisma.issueTag.createMany({
+          data: tagIds.map((tagId) => ({ issueId: issue.id, tagId })),
+          skipDuplicates: true,
+        })
+      }
+    }
   }
 }

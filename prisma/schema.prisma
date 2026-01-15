@@ -27,6 +27,7 @@ model User {
   assignedIssues IssueAssignment[]
   comments      Comment[]
   activities    Activity[]
+  notifications Notification[]
 
   @@map("users")
 }
@@ -117,6 +118,7 @@ model Issue {
   assignments     IssueAssignment[]
   comments        Comment[]
   activities      Activity[]
+  notifications   Notification[]
 
   @@index([state])
   @@index([priority])
@@ -255,4 +257,32 @@ model Setting {
   updatedAt DateTime @updatedAt
 
   @@map("settings")
+}
+
+// Notifications
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String?          @db.Text
+  issueId   String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issue     Issue?           @relation(fields: [issueId], references: [id], onDelete: SetNull)
+
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  ISSUE_CREATED
+  ISSUE_ASSIGNED
+  ISSUE_UPDATED
+  ISSUE_MOVED
+  COMMENT_ADDED
+  MENTION
 }

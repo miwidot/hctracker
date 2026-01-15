@@ -2,6 +2,69 @@
 CHANGELOG - HC Tracker
 ================================================================================
 
+[2026-01-15 22:34:12] - Markdown Editor & Password Change Fix
+--------------------------------------------------------------------------------
+- Disabled live preview in Markdown editor (now edit-only mode)
+  - Changed default preview from 'live' to 'edit'
+- Fixed password change functionality
+  - API now returns success flag and specific message
+  - Frontend now properly shows success/error messages
+  - Shows "Password updated successfully" when password changes
+
+Files modified:
+- src/components/ui/MarkdownEditor.tsx (preview = 'edit')
+- src/app/api/users/me/route.ts (improved response format)
+- src/app/(dashboard)/settings/page.tsx (better error handling)
+
+[2026-01-15 22:31:48] - Issues Page Improvements & Label Sync Fix
+--------------------------------------------------------------------------------
+- Changed default filter to show OPEN issues (instead of all)
+- Added tag filter dropdown to issues page
+  - Multi-select tags to filter issues
+  - Shows active filters as colored pills
+  - Clear all button
+  - Click outside to close dropdown
+- Fixed GitHub label sync for existing issues
+  - Labels from GitHub issues are now synced as tags
+  - Auto-creates tags if they don't exist locally
+  - Links tags to issues during sync
+
+Files modified:
+- src/stores/issueStore.ts (default filter state: 'OPEN')
+- src/app/(dashboard)/issues/page.tsx (added tag filter UI)
+- src/app/api/issues/route.ts (sync labels as tags)
+
+[2026-01-15 22:28:13] - Real-Time Notification System
+--------------------------------------------------------------------------------
+- Added Notification model to Prisma schema
+  - Supports multiple notification types: ISSUE_CREATED, ISSUE_ASSIGNED,
+    ISSUE_UPDATED, ISSUE_MOVED, COMMENT_ADDED, MENTION
+  - Relations to User and Issue models
+  - Read/unread tracking
+- Created notifications API endpoints
+  - GET /api/notifications - fetch user's notifications with unread count
+  - POST /api/notifications - create notifications (internal use)
+  - PATCH /api/notifications - mark as read (single or all)
+- Updated Header bell icon with real notifications
+  - Shows unread count badge
+  - Dropdown with notification list
+  - Mark all as read button
+  - Auto-polls every 30 seconds for new notifications
+  - Click outside to close
+- Notifications are created automatically on:
+  - Issue creation (notifies all users except creator)
+  - Issue moved between board columns (notifies all users)
+  - Issue assignment (notifies assigned users)
+- Created notification helper library for easy notification creation
+
+Files created/modified:
+- prisma/schema.prisma (added Notification model, NotificationType enum)
+- src/lib/notifications.ts (new - helper functions)
+- src/app/api/notifications/route.ts (new - API endpoints)
+- src/components/layout/Header.tsx (updated with notification dropdown)
+- src/app/api/issues/route.ts (added notification on create)
+- src/app/api/issues/[id]/route.ts (added notifications on move/assign)
+
 [2026-01-15 22:00:03] - User Profile Settings
 --------------------------------------------------------------------------------
 - Added ability for users to change their email and password
