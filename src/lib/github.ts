@@ -303,23 +303,31 @@ export const github = {
   // Upload image to repository
   async uploadImage(filename: string, content: string): Promise<string> {
     const { owner, repo } = await getRepoConfig()
+    if (!owner || !repo) {
+      throw new Error('GitHub owner/repo not configured')
+    }
+
     const path = `.github/images/${filename}`
 
-    try {
-      const response = await octokit.repos.createOrUpdateFileContents({
-        owner,
-        repo,
-        path,
-        message: `Upload image: ${filename}`,
-        content, // base64 encoded
-      })
+    // Get default branch
+    const repoInfo = await octokit.repos.get({ owner, repo })
+    const branch = repoInfo.data.default_branch
 
-      // Return raw GitHub URL for the image
-      return `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}`
-    } catch (error) {
-      console.error('Error uploading image to GitHub:', error)
-      throw error
-    }
+    console.log(`Uploading image to ${owner}/${repo}/${branch}/${path}`)
+
+    const response = await octokit.repos.createOrUpdateFileContents({
+      owner,
+      repo,
+      path,
+      message: `Upload image: ${filename}`,
+      content, // base64 encoded
+      branch,
+    })
+
+    console.log('Upload response:', response.status, response.data.content?.html_url)
+
+    // Return raw GitHub URL for the image
+    return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`
   },
 }
 
