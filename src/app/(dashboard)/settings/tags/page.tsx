@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { Header } from '@/components/layout/Header'
-import { Plus, Trash2, Edit2, X, Check, Loader2, RefreshCw, Github } from 'lucide-react'
+import { Plus, Trash2, Edit2, X, Check, Loader2, RefreshCw, Github, ShieldAlert } from 'lucide-react'
 
 interface Tag {
   id: string
@@ -16,7 +17,8 @@ interface Tag {
 }
 
 export default function TagsSettingsPage() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
+  const router = useRouter()
   const [tags, setTags] = useState<Tag[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -32,6 +34,29 @@ export default function TagsSettingsPage() {
   })
 
   const isAdmin = session?.user?.role === 'ADMIN'
+
+  // Redirect non-admin users
+  useEffect(() => {
+    if (status === 'authenticated' && !isAdmin) {
+      router.push('/board')
+    }
+  }, [status, isAdmin, router])
+
+  // Show access denied for non-admin
+  if (status === 'authenticated' && !isAdmin) {
+    return (
+      <>
+        <Header title="Access Denied" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-white mb-2">Admin Access Required</h2>
+            <p className="text-slate-400">You don't have permission to access this page.</p>
+          </div>
+        </div>
+      </>
+    )
+  }
 
   const handleSync = async () => {
     setSyncing(true)

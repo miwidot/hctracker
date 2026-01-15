@@ -2,6 +2,18 @@
 CHANGELOG - HC Tracker
 ================================================================================
 
+[2026-01-15 22:41:47] - Make Tags management admin-only
+--------------------------------------------------------------------------------
+- Tags page now requires admin access
+  - Hidden from sidebar for non-admin users
+  - Redirects to board if non-admin tries to access directly
+  - Shows "Access Denied" message before redirect
+- Tags are still visible on issues for all users (read-only)
+
+Files modified:
+- src/components/layout/Sidebar.tsx (Tags: adminOnly: true)
+- src/app/(dashboard)/settings/tags/page.tsx (admin check + redirect)
+
 [2026-01-15 22:39:32] - Fix repo sync to clean up old issues
 --------------------------------------------------------------------------------
 - Sync now removes issues from previous/other repos
