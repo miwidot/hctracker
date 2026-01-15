@@ -31,16 +31,28 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: comments.map((c) => ({
-        id: c.id,
-        body: c.body,
-        createdAt: c.created_at,
-        updatedAt: c.updated_at,
-        user: {
-          login: c.user?.login || 'unknown',
-          avatarUrl: c.user?.avatar_url || '',
-        },
-      })),
+      data: comments.map((c) => {
+        // Parse username from comment body if it follows our format: **username** commented:
+        let displayName = c.user?.login || 'unknown'
+        let displayBody = c.body || ''
+
+        const match = displayBody.match(/^\*\*(.+?)\*\* commented:\n\n/)
+        if (match) {
+          displayName = match[1]
+          displayBody = displayBody.replace(/^\*\*(.+?)\*\* commented:\n\n/, '')
+        }
+
+        return {
+          id: c.id,
+          body: displayBody,
+          createdAt: c.created_at,
+          updatedAt: c.updated_at,
+          user: {
+            login: displayName,
+            avatarUrl: c.user?.avatar_url || '',
+          },
+        }
+      }),
     })
   } catch (error) {
     console.error('Error fetching comments:', error)
