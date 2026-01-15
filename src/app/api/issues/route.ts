@@ -63,10 +63,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
 
-    // Create issue on GitHub
+    // Get tag names for GitHub labels
+    let labelNames: string[] = []
+    if (tagIds?.length) {
+      const tags = await prisma.tag.findMany({
+        where: { id: { in: tagIds } },
+        select: { name: true },
+      })
+      labelNames = tags.map((t) => t.name)
+    }
+
+    // Create issue on GitHub (with labels)
     const githubIssue = await github.createIssue({
       title,
       body: issueBody,
+      labels: labelNames.length > 0 ? labelNames : undefined,
     })
 
     // Create local issue record

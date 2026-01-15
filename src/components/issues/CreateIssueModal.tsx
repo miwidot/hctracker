@@ -181,30 +181,27 @@ export function CreateIssueModal({ isOpen, onClose }: CreateIssueModalProps) {
           {tags.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Tags
+                Tags {formData.tagIds.length > 0 && `(${formData.tagIds.length} selected)`}
               </label>
               <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <button
-                    key={tag.id}
-                    type="button"
-                    onClick={() => toggleTag(tag.id)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                      formData.tagIds.includes(tag.id)
-                        ? 'ring-2 ring-offset-2 ring-offset-slate-800'
-                        : ''
-                    }`}
-                    style={{
-                      backgroundColor: `${tag.color}20`,
-                      color: tag.color,
-                      ...(formData.tagIds.includes(tag.id) && {
-                        ringColor: tag.color,
-                      }),
-                    }}
-                  >
-                    {tag.name}
-                  </button>
-                ))}
+                {tags.map((tag) => {
+                  const isSelected = formData.tagIds.includes(tag.id)
+                  return (
+                    <button
+                      key={tag.id}
+                      type="button"
+                      onClick={() => toggleTag(tag.id)}
+                      className="px-3 py-1.5 rounded-full text-sm font-medium transition-all"
+                      style={{
+                        backgroundColor: isSelected ? tag.color : `${tag.color}20`,
+                        color: isSelected ? '#fff' : tag.color,
+                        boxShadow: isSelected ? `0 0 0 2px ${tag.color}` : 'none',
+                      }}
+                    >
+                      {tag.name}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}
@@ -213,27 +210,27 @@ export function CreateIssueModal({ isOpen, onClose }: CreateIssueModalProps) {
           {groups.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Groups
+                Groups {formData.groupIds.length > 0 && `(${formData.groupIds.length} selected)`}
               </label>
               <div className="flex flex-wrap gap-2">
-                {groups.map((group) => (
-                  <button
-                    key={group.id}
-                    type="button"
-                    onClick={() => toggleGroup(group.id)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                      formData.groupIds.includes(group.id)
-                        ? 'ring-2 ring-offset-2 ring-offset-slate-800'
-                        : ''
-                    }`}
-                    style={{
-                      backgroundColor: `${group.color}20`,
-                      color: group.color,
-                    }}
-                  >
-                    {group.name}
-                  </button>
-                ))}
+                {groups.map((group) => {
+                  const isSelected = formData.groupIds.includes(group.id)
+                  return (
+                    <button
+                      key={group.id}
+                      type="button"
+                      onClick={() => toggleGroup(group.id)}
+                      className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+                      style={{
+                        backgroundColor: isSelected ? group.color : `${group.color}20`,
+                        color: isSelected ? '#fff' : group.color,
+                        boxShadow: isSelected ? `0 0 0 2px ${group.color}` : 'none',
+                      }}
+                    >
+                      {group.name}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}
