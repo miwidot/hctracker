@@ -322,3 +322,20 @@ export const github = {
     }
   },
 }
+
+// Helper to hide GitHub URLs in content (for display in editor)
+export function hideGitHubImageUrls(content: string, owner: string, repo: string): string {
+  if (!content || !owner || !repo) return content
+  const pattern = new RegExp(
+    `https://raw\\.githubusercontent\\.com/${owner}/${repo}/main/\\.github/images/`,
+    'g'
+  )
+  return content.replace(pattern, '/img/')
+}
+
+// Helper to expand short URLs to full GitHub URLs (for saving)
+export function expandImageUrls(content: string, owner: string, repo: string): string {
+  if (!content || !owner || !repo) return content
+  const githubBase = `https://raw.githubusercontent.com/${owner}/${repo}/main/.github/images/`
+  return content.replace(/!\[([^\]]*)\]\(\/img\/([^)]+)\)/g, `![$1](${githubBase}$2)`)
+}

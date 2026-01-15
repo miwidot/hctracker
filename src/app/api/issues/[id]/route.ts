@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../../auth/[...nextauth]/route'
 import { prisma } from '@/lib/prisma'
-import { github } from '@/lib/github'
+import { github, getRepoConfig, expandImageUrls, hideGitHubImageUrls } from '@/lib/github'
 import { notifyAllUsers, notifyIssueAssignees } from '@/lib/notifications'
 
 // GET - Fetch single issue
@@ -42,7 +42,14 @@ export async function GET(
       return NextResponse.json({ error: 'Issue not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ success: true, data: issue })
+    // Hide GitHub URLs in body for display
+    const { owner, repo } = await getRepoConfig()
+    const issueWithHiddenUrls = {
+      ...issue,
+      body: hideGitHubImageUrls(issue.body || '', owner, repo),
+    }
+
+    return NextResponse.json({ success: true, data: issueWithHiddenUrls })
   } catch (error) {
     console.error('Error fetching issue:', error)
     return NextResponse.json({ error: 'Failed to fetch issue' }, { status: 500 })
@@ -82,11 +89,15 @@ export async function PATCH(
       return NextResponse.json({ error: 'Issue not found' }, { status: 404 })
     }
 
+    // Expand short image URLs to full GitHub URLs before saving
+    const { owner, repo } = await getRepoConfig()
+    const expandedBody = issueBody !== undefined ? expandImageUrls(issueBody || '', owner, repo) : undefined
+
     // Update on GitHub if title or body changed
     if (title || issueBody !== undefined || state) {
       await github.updateIssue(currentIssue.githubId, {
         title: title || undefined,
-        body: issueBody !== undefined ? issueBody : undefined,
+        body: expandedBody,
         state: state === 'CLOSED' ? 'closed' : state === 'OPEN' ? 'open' : undefined,
       })
     }
@@ -94,7 +105,7 @@ export async function PATCH(
     // Build update data
     const updateData: Record<string, unknown> = {}
     if (title) updateData.title = title
-    if (issueBody !== undefined) updateData.body = issueBody
+    if (expandedBody !== undefined) updateData.body = expandedBody
     if (state) updateData.state = state
     if (priority) updateData.priority = priority
     if (boardColumn) updateData.boardColumn = boardColumn
@@ -194,7 +205,13 @@ export async function PATCH(
       },
     })
 
-    return NextResponse.json({ success: true, data: updatedIssue })
+    // Hide GitHub URLs in response
+    const responseIssue = updatedIssue ? {
+      ...updatedIssue,
+      body: hideGitHubImageUrls(updatedIssue.body || '', owner, repo),
+    } : null
+
+    return NextResponse.json({ success: true, data: responseIssue })
   } catch (error) {
     console.error('Error updating issue:', error)
     return NextResponse.json({ error: 'Failed to update issue' }, { status: 500 })

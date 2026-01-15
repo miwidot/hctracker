@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     // Upload to GitHub repository
     await github.uploadImage(filename, base64Content)
 
-    // Return short proxy URL (hides GitHub URL from user)
+    // Return short URL for editor (will be expanded when saving)
     const url = `/img/${filename}`
 
     return NextResponse.json({

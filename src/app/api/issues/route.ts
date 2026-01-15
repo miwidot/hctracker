@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../auth/[...nextauth]/route'
 import { prisma } from '@/lib/prisma'
-import { github } from '@/lib/github'
+import { github, getRepoConfig, expandImageUrls, hideGitHubImageUrls } from '@/lib/github'
 import { Priority } from '@prisma/client'
 import { notifyAllUsers } from '@/lib/notifications'
 
@@ -45,7 +45,14 @@ export async function GET(req: NextRequest) {
       orderBy: { githubId: 'desc' },
     })
 
-    return NextResponse.json({ success: true, data: issues })
+    // Hide GitHub URLs in issue bodies for display
+    const { owner, repo } = await getRepoConfig()
+    const issuesWithHiddenUrls = issues.map(issue => ({
+      ...issue,
+      body: hideGitHubImageUrls(issue.body || '', owner, repo),
+    }))
+
+    return NextResponse.json({ success: true, data: issuesWithHiddenUrls })
   } catch (error) {
     console.error('Error fetching issues:', error)
     return NextResponse.json({ error: 'Failed to fetch issues' }, { status: 500 })
@@ -77,10 +84,14 @@ export async function POST(req: NextRequest) {
       labelNames = tags.map((t) => t.name)
     }
 
+    // Expand short image URLs to full GitHub URLs before saving
+    const { owner, repo } = await getRepoConfig()
+    const expandedBody = expandImageUrls(issueBody || '', owner, repo)
+
     // Create issue on GitHub (with labels)
     const githubIssue = await github.createIssue({
       title,
-      body: issueBody,
+      body: expandedBody,
       labels: labelNames.length > 0 ? labelNames : undefined,
     })
 
