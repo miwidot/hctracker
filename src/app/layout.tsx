@@ -9,7 +9,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: 'HC Tracker - Bug Tracking System',
-  description: 'A powerful bug tracking system built on GitHub Issues',
+  description: 'A powerful bug tracking system for teams',
 }
 
 export default function RootLayout({
