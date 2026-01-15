@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { Header } from '@/components/layout/Header'
 import { Plus, Trash2, Users, Loader2 } from 'lucide-react'
 
@@ -16,9 +18,18 @@ interface Group {
 }
 
 export default function GroupsSettingsPage() {
+  const { data: session } = useSession()
+  const router = useRouter()
   const [groups, setGroups] = useState<Group[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
+
+  // Check admin access
+  useEffect(() => {
+    if (session && session.user.role !== 'ADMIN') {
+      router.push('/board')
+    }
+  }, [session, router])
 
   const [formData, setFormData] = useState({
     name: '',
@@ -68,6 +79,10 @@ export default function GroupsSettingsPage() {
     '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6',
     '#6366f1', '#8b5cf6', '#a855f7', '#ec4899',
   ]
+
+  if (session?.user.role !== 'ADMIN') {
+    return null
+  }
 
   return (
     <>

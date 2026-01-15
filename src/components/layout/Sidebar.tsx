@@ -22,7 +22,7 @@ const navigation = [
   { name: 'Board', href: '/board', icon: LayoutDashboard },
   { name: 'Issues', href: '/issues', icon: ListTodo },
   { name: 'Tags', href: '/settings/tags', icon: Tag },
-  { name: 'Groups', href: '/settings/groups', icon: Users },
+  { name: 'Groups', href: '/settings/groups', icon: Users, adminOnly: true },
   { name: 'Users', href: '/settings/users', icon: Users, adminOnly: true },
   { name: 'GitHub', href: '/settings/github', icon: Github, adminOnly: true },
   { name: 'Settings', href: '/settings', icon: Settings },
