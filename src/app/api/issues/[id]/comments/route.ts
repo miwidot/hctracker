@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../../../auth/[...nextauth]/route'
-import { github } from '@/lib/github'
+import { github, getRepoConfig, hideGitHubImageUrls, expandImageUrls } from '@/lib/github'
 import { prisma } from '@/lib/prisma'
 
 // GET - Get comments for an issue
@@ -28,6 +28,7 @@ export async function GET(
     }
 
     const comments = await github.getComments(issue.githubId)
+    const { owner, repo } = await getRepoConfig()
 
     return NextResponse.json({
       success: true,
@@ -41,6 +42,9 @@ export async function GET(
           displayName = match[1]
           displayBody = displayBody.replace(/^\*\*(.+?)\*\* commented:\n\n/, '')
         }
+
+        // Hide GitHub URLs in comment body
+        displayBody = hideGitHubImageUrls(displayBody, owner, repo)
 
         return {
           id: c.id,
@@ -91,8 +95,12 @@ export async function POST(
       return NextResponse.json({ error: 'Issue not found' }, { status: 404 })
     }
 
+    // Expand short image URLs before saving to GitHub
+    const { owner, repo } = await getRepoConfig()
+    const expandedBody = expandImageUrls(body, owner, repo)
+
     // Add comment with user attribution
-    const commentBody = `**${session.user.name || session.user.username}** commented:\n\n${body}`
+    const commentBody = `**${session.user.name || session.user.username}** commented:\n\n${expandedBody}`
     const comment = await github.addComment(issue.githubId, commentBody)
 
     return NextResponse.json({
