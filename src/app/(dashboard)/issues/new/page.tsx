@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Priority } from '@prisma/client'
 import { Header } from '@/components/layout/Header'
 import { MarkdownEditor } from '@/components/ui/MarkdownEditor'
+import { ImageUpload } from '@/components/ui/ImageUpload'
 import { useIssueStore } from '@/stores/issueStore'
 
 interface Tag {
@@ -142,9 +143,17 @@ export default function NewIssuePage() {
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Description
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-slate-300">
+                    Description
+                  </label>
+                  <ImageUpload
+                    onUpload={(url) => {
+                      const imageMarkdown = `\n![image](${url})\n`
+                      setFormData({ ...formData, body: formData.body + imageMarkdown })
+                    }}
+                  />
+                </div>
                 <MarkdownEditor
                   value={formData.body}
                   onChange={(value) => setFormData({ ...formData, body: value })}

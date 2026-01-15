@@ -25,6 +25,7 @@ import { Priority } from '@prisma/client'
 import { Header } from '@/components/layout/Header'
 import { MarkdownEditor } from '@/components/ui/MarkdownEditor'
 import { MarkdownPreview } from '@/components/ui/MarkdownPreview'
+import { ImageUpload } from '@/components/ui/ImageUpload'
 import { useIssueStore } from '@/stores/issueStore'
 import clsx from 'clsx'
 
@@ -312,7 +313,17 @@ export default function IssueDetailPage({ params }: { params: Promise<{ id: stri
 
                 {/* Description */}
                 <div className="p-4 sm:p-6 border-b border-slate-700">
-                  <h3 className="text-sm font-medium text-slate-400 mb-3">Description</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-medium text-slate-400">Description</h3>
+                    {isEditing && (
+                      <ImageUpload
+                        onUpload={(url) => {
+                          const imageMarkdown = `\n![image](${url})\n`
+                          setEditData({ ...editData, body: editData.body + imageMarkdown })
+                        }}
+                      />
+                    )}
+                  </div>
                   {isEditing ? (
                     <MarkdownEditor
                       value={editData.body}
@@ -374,7 +385,13 @@ export default function IssueDetailPage({ params }: { params: Promise<{ id: stri
                       placeholder="Add a comment..."
                       minHeight={150}
                     />
-                    <div className="flex justify-end">
+                    <div className="flex justify-between items-center">
+                      <ImageUpload
+                        onUpload={(url) => {
+                          const imageMarkdown = `\n![image](${url})\n`
+                          setNewComment(newComment + imageMarkdown)
+                        }}
+                      />
                       <button
                         type="submit"
                         disabled={!newComment.trim() || submittingComment}

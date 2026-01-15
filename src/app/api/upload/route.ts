@@ -1,0 +1,65 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '../auth/[...nextauth]/route'
+import { writeFile } from 'fs/promises'
+import path from 'path'
+import { randomUUID } from 'crypto'
+
+export async function POST(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const formData = await req.formData()
+    const file = formData.get('file') as File | null
+
+    if (!file) {
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      return NextResponse.json(
+        { error: 'Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.' },
+        { status: 400 }
+      )
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024
+    if (file.size > maxSize) {
+      return NextResponse.json(
+        { error: 'File too large. Maximum size is 5MB.' },
+        { status: 400 }
+      )
+    }
+
+    // Generate unique filename
+    const ext = path.extname(file.name) || '.jpg'
+    const filename = `${randomUUID()}${ext}`
+    const uploadPath = path.join(process.cwd(), 'public', 'uploads', filename)
+
+    // Convert file to buffer and save
+    const bytes = await file.arrayBuffer()
+    const buffer = Buffer.from(bytes)
+    await writeFile(uploadPath, buffer)
+
+    // Return the URL
+    const url = `/uploads/${filename}`
+
+    return NextResponse.json({
+      success: true,
+      url,
+      filename,
+    })
+  } catch (error) {
+    console.error('Error uploading file:', error)
+    return NextResponse.json(
+      { error: 'Failed to upload file' },
+      { status: 500 }
+    )
+  }
+}

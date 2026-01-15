@@ -2,6 +2,25 @@
 CHANGELOG - HC Tracker
 ================================================================================
 
+[2026-01-15 23:16:14] - Image upload for issues and comments
+--------------------------------------------------------------------------------
+- Added image upload functionality
+  - Upload button next to description field
+  - Upload button in comment form
+  - Supports JPEG, PNG, GIF, WebP (max 5MB)
+  - Images stored in public/uploads folder
+  - Automatically inserts markdown image syntax
+- Images display in markdown preview
+
+Files created:
+- src/app/api/upload/route.ts (upload API endpoint)
+- src/components/ui/ImageUpload.tsx (upload button component)
+- public/uploads/ (storage directory)
+
+Files modified:
+- src/app/(dashboard)/issues/new/page.tsx (image upload for new issues)
+- src/app/(dashboard)/issues/[id]/page.tsx (image upload for edit & comments)
+
 [2026-01-15 23:04:45] - Track issue author (who created the issue)
 --------------------------------------------------------------------------------
 - Added authorId field to Issue model in database
