@@ -4,7 +4,7 @@ module.exports = {
       name: 'hctracker',
       script: 'node_modules/next/dist/bin/next',
       args: 'start -p 4029',
-      cwd: '/var/www/hctracker',
+      cwd: '/home/hctracker/hctracker',
       instances: 1,
       autorestart: true,
       watch: false,
