@@ -61,7 +61,7 @@ export default function NewIssuePage() {
       const data = await response.json()
       if (data.success) {
         addIssue(data.data)
-        router.push('/issues')
+        router.push(`/issues/${data.data.id}`)
       }
     } catch (error) {
       console.error('Error creating issue:', error)

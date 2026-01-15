@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
           },
         },
       },
-      orderBy: [{ boardColumn: 'asc' }, { boardPosition: 'asc' }],
+      orderBy: { githubId: 'desc' },
     })
 
     return NextResponse.json({ success: true, data: issues })
