@@ -1,10 +1,12 @@
+const HOME = process.env.HOME || '/home/hctracker'
+
 module.exports = {
   apps: [
     {
       name: 'hctracker',
       script: 'node_modules/next/dist/bin/next',
       args: 'start -p 4029',
-      cwd: '/home/hctracker/hctracker',
+      cwd: `${HOME}/hctracker`,
       instances: 1,
       autorestart: true,
       watch: false,
@@ -17,9 +19,9 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 4029,
       },
-      error_file: '/home/hctracker/logs/hctracker-error.log',
-      out_file: '/home/hctracker/logs/hctracker-out.log',
-      log_file: '/home/hctracker/logs/hctracker-combined.log',
+      error_file: `${HOME}/logs/hctracker-error.log`,
+      out_file: `${HOME}/logs/hctracker-out.log`,
+      log_file: `${HOME}/logs/hctracker-combined.log`,
       time: true,
     },
   ],
