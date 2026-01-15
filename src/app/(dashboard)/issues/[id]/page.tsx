@@ -262,6 +262,9 @@ export default function IssueDetailPage({ params }: { params: Promise<{ id: stri
                       )}
                       <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-slate-400">
                         <span className="font-mono">#{issue.githubId}</span>
+                        {issue.author && (
+                          <span>by <span className="text-indigo-400">{issue.author.name || issue.author.username}</span></span>
+                        )}
                         <span>Created {formatDistanceToNow(new Date(issue.createdAt), { addSuffix: true })}</span>
                         {isAdmin && issue.githubUrl && (
                           <a
@@ -493,6 +496,19 @@ export default function IssueDetailPage({ params }: { params: Promise<{ id: stri
                   <p className="text-slate-500 text-sm">No tags</p>
                 )}
               </div>
+
+              {/* Author */}
+              {issue.author && (
+                <div className="bg-slate-800 rounded-2xl border border-slate-700 p-4">
+                  <h3 className="text-sm font-medium text-slate-400 mb-3">Created by</h3>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                      {(issue.author.name || issue.author.username)[0].toUpperCase()}
+                    </div>
+                    <span className="text-sm text-slate-300">{issue.author.name || issue.author.username}</span>
+                  </div>
+                </div>
+              )}
 
               {/* Assignees */}
               <div className="bg-slate-800 rounded-2xl border border-slate-700 p-4">

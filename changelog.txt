@@ -2,6 +2,22 @@
 CHANGELOG - HC Tracker
 ================================================================================
 
+[2026-01-15 23:04:45] - Track issue author (who created the issue)
+--------------------------------------------------------------------------------
+- Added authorId field to Issue model in database
+- Issues now store who created them
+- Issue list shows Author column
+- Issue detail page shows "Created by" in header and sidebar
+- Comments already show the user who wrote them
+
+Files modified:
+- prisma/schema.prisma (added authorId to Issue, createdIssues to User)
+- src/types/index.ts (added author to IssueWithRelations)
+- src/app/api/issues/route.ts (save authorId on create, include author)
+- src/app/api/issues/[id]/route.ts (include author in response)
+- src/app/(dashboard)/issues/page.tsx (Author column)
+- src/app/(dashboard)/issues/[id]/page.tsx (Created by section)
+
 [2026-01-15 23:00:23] - Make Board admin-only
 --------------------------------------------------------------------------------
 - Board page now requires admin access

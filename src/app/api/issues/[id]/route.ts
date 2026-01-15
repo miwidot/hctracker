@@ -21,6 +21,7 @@ export async function GET(
     const issue = await prisma.issue.findUnique({
       where: { id },
       include: {
+        author: { select: { id: true, username: true, name: true, avatar: true } },
         tags: { include: { tag: true } },
         groups: { include: { group: true } },
         assignments: {
@@ -182,6 +183,7 @@ export async function PATCH(
     const updatedIssue = await prisma.issue.findUnique({
       where: { id },
       include: {
+        author: { select: { id: true, username: true, name: true, avatar: true } },
         tags: { include: { tag: true } },
         groups: { include: { group: true } },
         assignments: {

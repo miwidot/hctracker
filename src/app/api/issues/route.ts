@@ -25,6 +25,9 @@ export async function GET(req: NextRequest) {
     // Fetch issues with relations
     const issues = await prisma.issue.findMany({
       include: {
+        author: {
+          select: { id: true, username: true, name: true, avatar: true },
+        },
         tags: {
           include: { tag: true },
         },
@@ -93,6 +96,7 @@ export async function POST(req: NextRequest) {
         priority: (priority as Priority) || 'MEDIUM',
         boardColumn: 'backlog',
         boardPosition: 0,
+        authorId: session.user.id,
         tags: tagIds?.length
           ? { create: tagIds.map((tagId: string) => ({ tagId })) }
           : undefined,
@@ -104,6 +108,7 @@ export async function POST(req: NextRequest) {
           : undefined,
       },
       include: {
+        author: { select: { id: true, username: true, name: true, avatar: true } },
         tags: { include: { tag: true } },
         groups: { include: { group: true } },
         assignments: {

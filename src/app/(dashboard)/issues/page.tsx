@@ -250,6 +250,9 @@ export default function IssuesPage() {
                 <th className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider">
                   Issue
                 </th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider w-28">
+                  Author
+                </th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-slate-400 uppercase tracking-wider w-24">
                   State
                 </th>
@@ -285,6 +288,15 @@ export default function IssuesPage() {
                           {issue.title}
                         </span>
                       </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {issue.author ? (
+                        <span className="text-sm text-slate-300">
+                          {issue.author.name || issue.author.username}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-slate-500">-</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <span
@@ -349,7 +361,7 @@ export default function IssuesPage() {
 
               {issues.length === 0 && (
                 <tr>
-                  <td colSpan={session?.user?.role === 'ADMIN' ? 6 : 5} className="px-4 py-12 text-center text-slate-400">
+                  <td colSpan={session?.user?.role === 'ADMIN' ? 7 : 6} className="px-4 py-12 text-center text-slate-400">
                     No issues found. Create your first issue to get started.
                   </td>
                 </tr>

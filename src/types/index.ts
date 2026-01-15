@@ -2,6 +2,7 @@ import { Issue, Tag, Group, User, Priority, IssueState } from '@prisma/client'
 
 // Extended Issue type with relations
 export interface IssueWithRelations extends Issue {
+  author?: Pick<User, 'id' | 'username' | 'name' | 'avatar'> | null
   tags: Array<{
     tag: Tag
   }>
