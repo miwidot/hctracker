@@ -2,6 +2,20 @@
 CHANGELOG - HC Tracker
 ================================================================================
 
+[2026-01-15 22:50:16] - Fix tag sync to delete GitHub labels when deleted locally
+--------------------------------------------------------------------------------
+- Tag sync now properly handles local deletions
+  - When tags are deleted locally and sync is triggered, they are removed from GitHub
+  - Prevents deleted labels from being re-imported during sync
+- Added deleteLabel function to GitHub API library
+- Updated sync endpoint to delete GitHub labels that don't exist locally
+- UI shows count of deleted labels in sync result message
+
+Files modified:
+- src/lib/github.ts (added deleteLabel function)
+- src/app/api/tags/sync/route.ts (delete labels not in local)
+- src/app/(dashboard)/settings/tags/page.tsx (show deleted count)
+
 [2026-01-15 22:47:16] - Replace modals with full pages for issues
 --------------------------------------------------------------------------------
 - Created /issues/new page for creating issues

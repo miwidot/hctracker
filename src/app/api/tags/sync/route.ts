@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
     const results = {
       imported: 0,
       exported: 0,
+      deleted: 0,
       errors: [] as string[],
     }
 
@@ -79,6 +80,24 @@ export async function POST(req: NextRequest) {
             results.exported++
           } catch (err) {
             results.errors.push(`Failed to export "${tag.name}"`)
+          }
+        }
+      }
+    }
+
+    // Delete from GitHub (remove GitHub labels that don't exist locally)
+    // This ensures local deletions are synced to GitHub
+    if (direction === 'export' || direction === 'both') {
+      for (const label of githubLabels) {
+        const existsLocally = localTags.find(
+          (t) => t.name.toLowerCase() === label.name.toLowerCase()
+        )
+        if (!existsLocally) {
+          try {
+            await github.deleteLabel(label.name)
+            results.deleted++
+          } catch (err) {
+            results.errors.push(`Failed to delete "${label.name}" from GitHub`)
           }
         }
       }

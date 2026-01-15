@@ -262,6 +262,16 @@ export const github = {
     return response.data
   },
 
+  // Delete a label
+  async deleteLabel(name: string) {
+    const { owner, repo } = await getRepoConfig()
+    await octokit.issues.deleteLabel({
+      owner,
+      repo,
+      name,
+    })
+  },
+
   // Validate connection
   async validateConnection(): Promise<boolean> {
     try {

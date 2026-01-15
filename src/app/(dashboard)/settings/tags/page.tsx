@@ -24,7 +24,7 @@ export default function TagsSettingsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingTag, setEditingTag] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
-  const [syncResult, setSyncResult] = useState<{ imported: number; exported: number } | null>(null)
+  const [syncResult, setSyncResult] = useState<{ imported: number; exported: number; deleted: number } | null>(null)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -132,7 +132,7 @@ export default function TagsSettingsPage() {
           {syncResult && (
             <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 mb-6">
               <p className="text-green-400">
-                Sync complete: {syncResult.imported} imported from GitHub, {syncResult.exported} exported to GitHub
+                Sync complete: {syncResult.imported} imported, {syncResult.exported} exported, {syncResult.deleted} deleted from GitHub
               </p>
             </div>
           )}
