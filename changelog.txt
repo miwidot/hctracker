@@ -2,6 +2,30 @@
 CHANGELOG - HC Tracker
 ================================================================================
 
+[2026-01-15 22:47:16] - Replace modals with full pages for issues
+--------------------------------------------------------------------------------
+- Created /issues/new page for creating issues
+  - Full-page form with better mobile experience
+  - Clean design with proper spacing
+  - Back navigation to issues list
+- Created /issues/[id] page for viewing/editing issues
+  - Full-page layout with sidebar for metadata
+  - Responsive design (stacked on mobile, side-by-side on desktop)
+  - Comments section with markdown support
+  - Edit mode for title, description, priority, tags
+- Removed modal components from Board and Issues pages
+  - Clicking issues now navigates to detail page
+  - Create button navigates to /issues/new
+- Much better UX on mobile devices
+
+Files created:
+- src/app/(dashboard)/issues/new/page.tsx
+- src/app/(dashboard)/issues/[id]/page.tsx
+
+Files modified:
+- src/app/(dashboard)/board/page.tsx (simplified, no modals)
+- src/app/(dashboard)/issues/page.tsx (no modals, use navigation)
+
 [2026-01-15 22:41:47] - Make Tags management admin-only
 --------------------------------------------------------------------------------
 - Tags page now requires admin access

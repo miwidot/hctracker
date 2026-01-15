@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
-import { CreateIssueModal } from '@/components/issues/CreateIssueModal'
-import { IssueDetailModal } from '@/components/issues/IssueDetailModal'
 import { useIssueStore } from '@/stores/issueStore'
 import {
   AlertCircle,
@@ -40,8 +40,7 @@ const stateStyles = {
 
 export default function IssuesPage() {
   const { data: session } = useSession()
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null)
+  const router = useRouter()
   const [availableTags, setAvailableTags] = useState<TagData[]>([])
   const [showTagDropdown, setShowTagDropdown] = useState(false)
   const tagDropdownRef = useRef<HTMLDivElement>(null)
@@ -110,10 +109,6 @@ export default function IssuesPage() {
     setFilters({ tagIds: [] })
   }
 
-  const selectedIssue = selectedIssueId
-    ? allIssues.find((i) => i.id === selectedIssueId) || null
-    : null
-
   useEffect(() => {
     fetchIssues()
   }, [fetchIssues])
@@ -122,7 +117,7 @@ export default function IssuesPage() {
     <>
       <Header
         title="Issues"
-        onCreateIssue={() => setShowCreateModal(true)}
+        onCreateIssue={() => router.push('/issues/new')}
       />
 
       <div className="flex-1 overflow-auto p-6">
@@ -279,7 +274,7 @@ export default function IssuesPage() {
                   <tr
                     key={issue.id}
                     className="hover:bg-slate-700/50 transition-colors cursor-pointer"
-                    onClick={() => setSelectedIssueId(issue.id)}
+                    onClick={() => router.push(`/issues/${issue.id}`)}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
@@ -364,15 +359,6 @@ export default function IssuesPage() {
         </div>
       </div>
 
-      <CreateIssueModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-      />
-      <IssueDetailModal
-        issue={selectedIssue}
-        isOpen={!!selectedIssueId}
-        onClose={() => setSelectedIssueId(null)}
-      />
     </>
   )
 }
