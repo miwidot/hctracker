@@ -322,13 +322,13 @@ export const github = {
       branch,
     })
 
-    // Return the download URL from GitHub's response
-    const downloadUrl = response.data.content?.download_url
-    if (!downloadUrl) {
-      throw new Error('Upload failed - no download URL in response')
+    // Verify upload succeeded
+    if (!response.data.content?.sha) {
+      throw new Error('Upload failed - no SHA in response')
     }
 
-    return downloadUrl
+    // Return our proxy URL (works for private repos)
+    return `/img/${filename}`
   },
 }
 
